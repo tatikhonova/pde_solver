@@ -2,7 +2,7 @@ import numpy as np
 import numba
 
 
-@numba.jit
+@numba.njit
 def derivative(u, h, axis):
     if axis == 1:
         u_shift_down = np.roll(u, 1)
@@ -60,12 +60,12 @@ def second_derivative(u, x, t, axis):
 
 
 if __name__ == "__main__":
-    x1 = np.linspace(0, 1, 10)
-    t1 = np.linspace(0, 1, 10)
+    x1 = np.linspace(0, 1, 20)
+    t1 = np.linspace(0, 1, 20)
 
     x, t = np.meshgrid(x1, t1)
     u = x + t ** 2
-
-    du = derivative(u, x1, axis=0)
-    du = derivative(du, t1, axis=0)
+    
+    du = derivative(u, x1, axis=1)
+    # du = derivative(du, t1, axis=0)
     print(du)

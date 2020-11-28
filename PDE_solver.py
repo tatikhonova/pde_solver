@@ -53,18 +53,23 @@ def string_reshape(string, grid):
     return u
 
 
-def operator_norm(string, grid, operator, norm_lambda) -> float:
+def operator_norm(string, grid, operator, norm_lambda, bcond) -> float:
     u = string_reshape(string, grid)
     op = apply_const_operator(u, grid, operator)
-    bcond1 = np.take(u, 0, axis=0)
-    bcond2 = np.take(u, -1, axis=0)
-    bcond3 = np.take(u, 0, axis=1) - np.sin(np.pi * grid[0])
-    bcond4 = np.take(u, -1, axis=1) - np.sin(np.pi * grid[0])
+    bond = []
+    for condition in bcond:
+        bond_op = u
+        if 'operator' in condition:
+            bond_op = apply_const_operator(u, grid, condition['operator'])
+
+        bond.append(np.take(bond_op, condition['boundary'], condition['axis']) \
+                    - condition['string'])
+
+    bond = list(map(np.linalg.norm, bond))
     if np.allclose(u / np.max(u), np.zeros_like(u) + 1):
         norm = 1e10
     else:
-        norm = np.linalg.norm(op) + norm_lambda * (
-                np.linalg.norm(bcond1) + np.linalg.norm(bcond2) + np.linalg.norm(bcond3) + np.linalg.norm(bcond4))
+        norm = np.linalg.norm(op) + norm_lambda * np.sum(bond)
     return norm
 
 
@@ -202,7 +207,6 @@ def gradient_opt(matrix, grid, operator, operator_lambda):
         if np.abs(norm_before - norm_after) == 0: break
     sln = string_reshape(opt.x, grid)
     return sln
-
 
 def plot_3D_surface(surf, solution, grid):
     X, T = np.meshgrid(grid[1], grid[0])

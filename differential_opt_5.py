@@ -14,6 +14,7 @@ from scipy.optimize import minimize
 from scipy.optimize import differential_evolution
 from scipy.optimize import dual_annealing
 import numba
+import time
 
 from PDE_solver import solution_interp
 from PDE_solver import string_reshape
@@ -98,13 +99,14 @@ def callback_wolfram_error_anneal(Xi, f, stat):
         plt.show()
     return False
 
+
 plt.rcParams["figure.max_open_warning"] = 1000
 
 arr = []
 string = []
 
-x = np.linspace(0, 1, 11)
-t = np.linspace(0, 1, 11)
+x = np.linspace(0, 1, 21)
+t = np.linspace(0, 1, 21)
 
 grid = numba.typed.List()
 
@@ -137,7 +139,12 @@ wolfram_interp = solution_interp(wolfram_grid, wolfram, grid)
 
 # plot_3D_surface(wolfram_interp, None, grid)
 
-opt = minimize(operator_norm, arr.reshape(-1), args=(grid, [[(1, 0, 2, 1)], [(-1 / 4, 1, 2, 1)]], 1),
+bcond = [{'boundary': 0, 'axis': 0, 'string': np.zeros(len(grid[0]))},
+         {'boundary': -1, 'axis': 0, 'string': np.zeros(len(grid[0]))},
+         {'boundary': 0, 'axis': 1, 'string': np.sin(np.pi * grid[0])},
+         {'boundary': -1, 'axis': 1, 'string': np.sin(np.pi * grid[0])}]
+
+opt = minimize(operator_norm, arr.reshape(-1), args=(grid, [[(1, 0, 2, 1)], [(-1 / 4, 1, 2, 1)]], 1, bcond),
                options={'disp': True, 'maxiter': 1000}, tol=0.05)
 
 sln = string_reshape(opt.x, grid)
